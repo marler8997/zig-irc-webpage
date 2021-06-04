@@ -74,19 +74,22 @@ function twoDigit(num) {
     return ((num <= 9) ? "0" : "") + num;
 }
 
-function setLogs(file, text) {
+month_names = ["", "January", "Feburary", "March", "April", "May", "June", "July", "August", "September", "October", "December"]
+
+function setLogs(date, text) {
   entries = text.split("\n")
-  html = '<br/><h3>' + file + '</h3><br/>';
 
   logsDiv = get('LogsDiv')
-  logsDiv.innerHTML = '';
+  logsDiv.innerHTML = '<br/>' +
+      '<h3>' + month_names[date.month] + ' ' + date.day + ', ' + date.year + '</h3>' +
+      '<br/>';
   for (var i = 0; i + 2 < entries.length; i += 4) {
       msgDiv = document.createElement('div')
       msgDiv.classList.add('IrcMessage')
       logsDiv.appendChild(msgDiv)
       var d = new Date(0);
       d.setUTCSeconds(entries[i]);
-      //html += d.toLocaleTimeString();
+      //timeString += d.toLocaleTimeString();
       timeElem = document.createElement('time')
       //timeElem.timestamp = d.toString()
       timeElem.innerHTML = twoDigit(d.getHours()) + ':' + twoDigit(d.getMinutes())
@@ -106,22 +109,27 @@ function setLogs(file, text) {
   }
 }
 
-function getLogs(file) {
+function dateToFile(date) {
+  return date.year + '/' + twoDigit(date.month) + '-' + twoDigit(date.day) + ".txt"
+}
+
+function getLogs(date) {
   get("LogsDiv").innerHTML = '<pre id="RequestLog"><h3>Request Log</h3></pre><div id="LogContent"></div>';
   var request = new XMLHttpRequest();
   request.onreadystatechange = function() {
     get("RequestLog").innerHTML = get("RequestLog").innerHTML +
         "ReadyState=" + this.readyState + " Status=" + this.status + "\n";
     if (this.readyState == 4 && this.status == 200) {
-      setLogs(file, request.responseText);
+      setLogs(date, request.responseText);
     }
   }
-  request.open("GET", logs_url_prefix + file, true);
+  url = logs_url_prefix + dateToFile(date);
+  request.open("GET", url, true);
   request.send();
 }
 
 function bodyOnLoad() {
-  getLogs("2021/05-01.txt");
+  getLogs({'year':2021, 'month':5, 'day':1})
 }
     
   </script>
