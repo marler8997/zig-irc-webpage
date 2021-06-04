@@ -77,20 +77,33 @@ function twoDigit(num) {
 function setLogs(file, text) {
   entries = text.split("\n")
   html = '<br/><h3>' + file + '</h3><br/>';
+
+  logsDiv = get('LogsDiv')
+  logsDiv.innerHTML = '';
   for (var i = 0; i + 2 < entries.length; i += 4) {
-      html += '<div class="IrcMessage">';
+      msgDiv = document.createElement('div')
+      msgDiv.classList.add('IrcMessage')
+      logsDiv.appendChild(msgDiv)
       var d = new Date(0);
       d.setUTCSeconds(entries[i]);
       //html += d.toLocaleTimeString();
-      html += '<time timestamp="' + d.toString() + '">' + twoDigit(d.getHours()) + ':' + twoDigit(d.getMinutes()) + '</time>';
+      timeElem = document.createElement('time')
+      //timeElem.timestamp = d.toString()
+      timeElem.innerHTML = twoDigit(d.getHours()) + ':' + twoDigit(d.getMinutes())
+      msgDiv.appendChild(timeElem)
       nick = nickOnly(entries[i+1]);
       color = getNickColor(nick);
-      html += '&nbsp;&lt;<span class="IrcNick" style="color:' + color + '">' + nick + '</span>&gt;&nbsp;';
-      html += entries[i+2]
-      html += '</div>';
+      nickSpan = document.createElement('span');
+      nickSpan.classList.add('IrcNick');
+      nickSpan.style = 'color:' + color;
+      nickSpan.appendChild(document.createTextNode(nick))
+
+      msgDiv.appendChild(document.createTextNode(" <"))
+      msgDiv.appendChild(nickSpan)
+      msgDiv.appendChild(document.createTextNode("> "))
+
+      msgDiv.appendChild(document.createTextNode(entries[i+2]))
   }
-  html += '</pre>'
-  get("LogsDiv").innerHTML = html;
 }
 
 function getLogs(file) {
