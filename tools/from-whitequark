@@ -1,0 +1,77 @@
+#!/usr/bin/env python3
+#
+# convert the "log-messages" div and convert it to the format we need
+#
+# in Chrome, use the "CopyElement" on the log-messages div and copy it to a file
+#
+import os
+import sys
+from html.parser import HTMLParser
+
+def getAttr(attrs, name):
+    for attr_name,val in attrs:
+        if name == attr_name:
+            return val
+    return None
+
+TALK_STATE_INIT = 0
+TALK_STATE_NICK = 1
+TALK_STATE_MSG = 2
+TALK_STATE_DONE = 3
+
+class MyHTMLParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.timestamp = None
+        self.talk_div_depth = 0
+        self.talk_state = 0
+    def handle_starttag(self, tag, attrs):
+        if self.talk_div_depth == 0:
+            if tag == "div":
+                class_val = getAttr(attrs, "class")
+                if class_val:
+                    if "talk" in class_val:
+                        self.timestamp = getAttr(attrs, "data-timestamp")
+                        assert(self.timestamp)
+                        self.talk_div_depth = 1
+                        self.talk_state = TALK_STATE_INIT
+                        print("{}\n".format(self.timestamp), end='')
+        elif self.talk_state == TALK_STATE_INIT and tag == "span":
+            class_val = getAttr(attrs, "class")
+            if "nick" in class_val:
+                self.talk_state = TALK_STATE_NICK
+    def handle_endtag(self, tag):
+        if self.talk_div_depth > 0:
+            if tag == "div":
+                self.talk_div_depth -= 1
+                if self.talk_div_depth == 0:
+                    assert(self.talk_state == TALK_STATE_DONE)
+            elif self.talk_state == TALK_STATE_NICK:
+                assert(tag == "span")
+                self.talk_state = TALK_STATE_MSG
+    def handle_data(self, data):
+        if self.talk_div_depth > 0:
+            if self.talk_state == TALK_STATE_INIT:
+                pass
+            elif self.talk_state == TALK_STATE_NICK:
+                print("{}\n".format(data), end='')
+            elif self.talk_state == TALK_STATE_MSG:
+                assert(data[0] == ">")
+                data = data[1:].strip()
+                print("{}\n\n".format(data), end='')
+                self.talk_state = TALK_STATE_DONE
+            elif self.talk_state == TALK_STATE_DONE:
+                pass
+            else:
+                assert(False)
+
+def main():
+    args = sys.argv[1:]
+    if len(args) != 1:
+        sys.exit("Usage: from-whitequark FILE")
+    with open(args[0], "r") as file:
+        text = file.read()
+    parser = MyHTMLParser()
+    parser.feed(text)
+
+main()
