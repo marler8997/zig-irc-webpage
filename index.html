@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html><head>
+  <title>Zig IRC Logs</title>
+  <style>
+* {padding:0; margin:0}
+body {
+  margin:5px;
+  font-family: "Menlo", "Monaco", monospace;
+  background:#333;
+  color:#eee;
+}
+.IrcMessage time {
+  color: #888;
+  margin-right: 5px;
+}
+  </style>
+  <script>
+
+var logs_url_prefix = "https://raw.githubusercontent.com/marler8997/zig-irc-logs/master/"
+
+function get(id) { return document.getElementById(id) }
+
+global = {
+    nick_color_map: {},
+    nick_color_list: ['#f00', '#0f0', '#00f'],
+    next_nick_color: 0,
+};
+
+function getNickColor(nick) {
+  if (!(nick in global.nick_color_map)) {
+    global.nick_color_map[nick] = global.nick_color_list[global.next_nick_color];
+    global.next_nick_color += 1;
+    if (global.next_nick_color >= global.nick_color_list.length) {
+      global.next_nick_color = 0;
+    }
+  }
+  return global.nick_color_map[nick];
+}
+
+function nickOnly(from) {
+  return from.substring(0, from.indexOf('!'))
+}
+
+function twoDigit(num) {
+    return ((num <= 9) ? "0" : "") + num;
+}
+
+function setLogs(file, text) {
+  entries = text.split("\n")
+  html = '<br/><h3>' + file + '</h3><br/>';
+  for (var i = 0; i + 2 < entries.length; i += 4) {
+      html += '<div class="IrcMessage">';
+      var d = new Date(0);
+      d.setUTCSeconds(entries[i]);
+      //html += d.toLocaleTimeString();
+      html += '<time timestamp="' + d.toString() + '">' + twoDigit(d.getHours()) + ':' + twoDigit(d.getMinutes()) + '</time>';
+      nick = nickOnly(entries[i+1]);
+      color = getNickColor(nick);
+      html += '&nbsp;&lt;<span class="IrcNick" style="color:' + color + '">' + nick + '</span>&gt;&nbsp;';
+      html += entries[i+2]
+      html += '</div>';
+  }
+  html += '</pre>'
+  get("LogsDiv").innerHTML = html;
+}
+
+function getLogs(file) {
+  get("LogsDiv").innerHTML = '<pre id="RequestLog"><h3>Request Log</h3></pre><div id="LogContent"></div>';
+  var request = new XMLHttpRequest();
+  request.onreadystatechange = function() {
+    get("RequestLog").innerHTML = get("RequestLog").innerHTML +
+        "ReadyState=" + this.readyState + " Status=" + this.status + "\n";
+    if (this.readyState == 4 && this.status == 200) {
+      setLogs(file, request.responseText);
+    }
+  }
+  request.open("GET", logs_url_prefix + file, true);
+  request.send();
+}
+
+function bodyOnLoad() {
+  getLogs("2021/06-04.txt");
+}
+    
+  </script>
+</head><body onload="bodyOnLoad()">
+  <h1>Zig IRC Logs</h1>
+  <div id="LogsDiv"></div>
+</body></html>
