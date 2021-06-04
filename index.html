@@ -79,11 +79,12 @@ function twoDigit(num) {
 
 month_names = ["", "January", "Feburary", "March", "April", "May", "June", "July", "August", "September", "October", "December"]
 
-function setLogs(date, text) {
+function setLogs(date, url, text) {
   entries = text.split("\n")
 
   logsDiv = get('LogsDiv')
   logsDiv.innerHTML = '<br/>' +
+      '<div><a href="' + url + '">' + url + '</a></div><br/>' +
       '<h3>' + month_names[date.month] + ' ' + date.day + ', ' + date.year + '</h3>' +
       '<br/>';
   for (var i = 0; i + 2 < entries.length; i += 4) {
@@ -118,15 +119,15 @@ function dateToFile(date) {
 
 function getLogs(date) {
   get("LogsDiv").innerHTML = '<pre id="RequestLog"><h3>Request Log</h3></pre><div id="LogContent"></div>';
+  url = logs_url_prefix + dateToFile(date);
   var request = new XMLHttpRequest();
   request.onreadystatechange = function() {
     get("RequestLog").innerHTML = get("RequestLog").innerHTML +
         "ReadyState=" + this.readyState + " Status=" + this.status + "\n";
     if (this.readyState == 4 && this.status == 200) {
-      setLogs(date, request.responseText);
+      setLogs(date, url, request.responseText);
     }
   }
-  url = logs_url_prefix + dateToFile(date);
   request.open("GET", url, true);
   request.send();
 }
@@ -162,9 +163,4 @@ function bodyOnLoad() {
   </script>
 </head><body onload="bodyOnLoad()">
   <div id="LogsDiv"></div>
-  <br/><br/><br/>
-  <hr/>
-  <div>
-  NOTE: these logs are pulled from <a href="https://github.com/marler8997/zig-irc-logs">https://github.com/marler8997/zig-irc-logs</a>
-  </div>
 </body></html>
