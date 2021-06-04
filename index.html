@@ -120,14 +120,18 @@ function getLogs(date) {
   url = logs_url_prefix + dateToFile(date);
   get('UrlDiv').innerHTML = '<a href="' + url + '">' + url + '</a>';
   get("LogsDiv").innerHTML =
-    '<pre id="RequestLog"><h3>Request Log</h3>' +
-    '</pre><div id="LogContent"></div>';
+    '<pre id="RequestLog"><h3>Request Log</h3>';
   var request = new XMLHttpRequest();
   request.onreadystatechange = function() {
     get("RequestLog").innerHTML = get("RequestLog").innerHTML +
         "ReadyState=" + this.readyState + " Status=" + this.status + "\n";
-    if (this.readyState == 4 && this.status == 200) {
-      setLogs(date, request.responseText);
+    if (this.readyState == 4) {
+      if (this.status == 200) {
+        setLogs(date, request.responseText);
+      } else {
+        get('LogsDiv').innerHTML = '<br/><div><h2>Error</h2>Failed to fetch log (' + this.status + ')<br/>' +
+            request.responseText + '</div><br/></br>' + get('LogsDiv').innerHTML;
+      }
     }
   }
   request.open("GET", url, true);
@@ -146,19 +150,32 @@ function handleBadDate(title, msg) {
   get('LogsDiv').innerHTML = '<br/><br/><h1>' + title + '</h1>' + msg;
 }
 
+function jsDateToQueryDate(date) {
+    return date.getFullYear() + "-" + twoDigit(date.getMonth()+1) + "-" + twoDigit(date.getDate())
+}
+
+function indexOfOrLen(s, e) {
+    const i = s.indexOf(e);
+    return (i == -1) ? s.length : e;
+}
+
 function bodyOnLoad() {
   const url_params = new URLSearchParams(window.location.search);
   if (!url_params.has('date')) {
-    handleBadDate('No Date Given', 'Please provide a date=YYYY-MM-DD in your URL')
-    return;
+    url_params.append("date", jsDateToQueryDate(new Date()));
+    const href = window.location.href;
+    const url = href.substring(0, indexOfOrLen(href, '?')) + '?' + url_params.toString()
+    get('LogsDiv').innerHTML = '<h1>Zig IRC Logs</h1>' +
+        'Today: <a href="' + url + '">' + url + '</a>';
+  } else {
+    const date_param = url_params.get('date');
+    const parsed_date = parseDate(date_param);
+    if (!parsed_date) {
+      handleBadDate('Invalid Date', 'Date "' + date_param + '" is not a valid YYYY-MM-DD date')
+      return;
+    }
+    getLogs(parsed_date);
   }
-  const date_param = url_params.get('date');
-  const parsed_date = parseDate(date_param);
-  if (!parsed_date) {
-    handleBadDate('Invalid Date', 'Date "' + date_param + '" is not a valid YYYY-MM-DD date')
-    return;
-  }
-  getLogs(parsed_date);
 }
 
   </script>
