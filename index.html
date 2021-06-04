@@ -3,6 +3,9 @@
   <title>Zig IRC Logs</title>
   <style>
 * {padding:0; margin:0}
+a {
+  color:#29e
+}
 body {
   margin:5px;
   font-family: "Menlo", "Monaco", monospace;
@@ -128,15 +131,40 @@ function getLogs(date) {
   request.send();
 }
 
+function parseDate(date_string) {
+  const match = date_string.match(/^([1-9][0-9][0-9][0-9])-([0-1][0-9])-([0-3][0-9])$/)
+  console.log(match)
+  if (match) {
+    return {'year':match[1],'month':match[2],'day':match[3]};
+  }
+  return null;
+}
+
+function handleBadDate(title, msg) {
+  get('LogsDiv').innerHTML = '<br/><br/><h1>' + title + '</h1>' + msg;
+}
+
 function bodyOnLoad() {
-  getLogs({'year':2021, 'month':5, 'day':1})
+  const url_params = new URLSearchParams(window.location.search);
+  if (url_params.has('date')) {
+    const date_param = url_params.get('date');
+    const parsed_date = parseDate(date_param);
+    if (parsed_date) {
+      getLogs({'year':2021, 'month':5, 'day':1})
+    } else {
+      handleBadDate('Invalid Date', 'Date "' + date_param + '" is not a valid YYYY-MM-DD date')
+    }
+  } else {
+    handleBadDate('No Date Given', 'Please provide a date=YYYY-MM-DD in your URL')
+  }
 }
     
   </script>
 </head><body onload="bodyOnLoad()">
-  <h1>Zig IRC Logs</h1>
-  <div>
-  NOTE: these logs are pulled from https://github.com/marler8997/zig-irc-logs
-  </div>
   <div id="LogsDiv"></div>
+  <br/><br/><br/>
+  <hr/>
+  <div>
+  NOTE: these logs are pulled from <a href="https://github.com/marler8997/zig-irc-logs">https://github.com/marler8997/zig-irc-logs</a>
+  </div>
 </body></html>
