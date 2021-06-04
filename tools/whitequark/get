@@ -1,0 +1,54 @@
+#!/usr/bin/env python3
+import sys
+import os
+import subprocess
+import calendar
+
+start_year = 2017
+start_month = 10
+start_day = 8
+
+out_dir = "out"
+
+def get(year, month, day):
+    year_dir = os.path.join(out_dir, str(year))
+    if not os.path.exists(year_dir):
+        os.mkdir(year_dir)
+    out_filename = os.path.join(year_dir, "{:02d}-{:02d}.txt".format(month, day))
+    if os.path.exists(out_filename):
+        print("{} already fetched".format(out_filename))
+        return
+    subprocess.run(["wget", "https://freenode.irclog.whitequark.org/zig/{}-{:02d}-{:02d}".format(year, month, day),
+                    "--output-document=log.html"])
+    tmp_filename = out_filename + ".tmp"
+    with open(tmp_filename, "w") as file:
+        subprocess.run(["./html2irc", "log.html"], stdout=file)
+    os.rename(tmp_filename, out_filename)
+    os.remove('log.html')
+
+def daysInMonth(year, month):
+    return calendar.monthrange(year, month)[1]
+
+def getMonth(year, month, start_day=1, end_day=None):
+    if end_day is None:
+        end_day = daysInMonth(year, month)
+    for day in range(start_day, end_day + 1):
+        get(year, month, day)
+
+def main():
+    if not os.path.exists(out_dir):
+        os.mkdir(out_dir)
+
+    getMonth(start_year, start_month, start_day)
+    for month in range(start_month + 1, 13):
+        getMonth(start_year, month)
+
+    for year in range(start_year + 1, 2021):
+        for month in range(1, 13):
+            getMonth(year, month)
+
+    for month in range(1, 4):
+        getMonth(2021, month)
+    getMonth(2021, 5, end_day=19)
+
+main()
