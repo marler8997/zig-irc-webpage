@@ -11,7 +11,6 @@ body {
 }
 .IrcMessage time {
   color: #888;
-  margin-right: 5px;
 }
   </style>
   <script>
@@ -22,23 +21,53 @@ function get(id) { return document.getElementById(id) }
 
 global = {
     nick_color_map: {},
-    nick_color_list: ['#f00', '#0f0', '#00f'],
+    nick_color_list: [
+      'tomato', 'orange', 'lightskyblue','mediumseagreen','turquoise','violet',
+      'aliceblue','antiquewhite',
+    ],
     next_nick_color: 0,
+    //next_nick_color: [40,255,255],
 };
+
+function swap(arr, i, j) {
+    var tmp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = tmp;
+}
+
+function nextNickColor() {
+  var color = global.nick_color_list[global.next_nick_color];
+  global.next_nick_color += 1;
+  if (global.next_nick_color >= global.nick_color_list.length) {
+    global.next_nick_color = 0;
+  }
+
+  // TODO: come up with a cool algorithm to cycle through colors?
+  //color = 'rgb(' +
+  //  global.next_nick_color[0] + ',' +
+  //  global.next_nick_color[1] + ',' +
+  //  global.next_nick_color[2] + ')' ;
+  //if (global.next_nick_color[0] == 40) {
+  //  swap(global.next_nick_color, 0, 1);
+  //} else if (global.next_nick_color[1] == 40) {
+  //  swap(global.next_nick_color, 1, 2);
+  //}
+
+  return color;
+}
 
 function getNickColor(nick) {
   if (!(nick in global.nick_color_map)) {
-    global.nick_color_map[nick] = global.nick_color_list[global.next_nick_color];
-    global.next_nick_color += 1;
-    if (global.next_nick_color >= global.nick_color_list.length) {
-      global.next_nick_color = 0;
-    }
+    global.nick_color_map[nick] = nextNickColor()
   }
   return global.nick_color_map[nick];
 }
 
 function nickOnly(from) {
-  return from.substring(0, from.indexOf('!'))
+  limit = from.indexOf("!")
+  if (limit == -1)
+      limit = from.length;
+  return from.substring(0, limit)
 }
 
 function twoDigit(num) {
